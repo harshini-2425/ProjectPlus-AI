@@ -1,0 +1,21 @@
+services:
+  project-api:
+    ports:
+      - "8000:8000"
+    build: .
+    volumes:
+      - ../backend/authentication/backend/alembic/versions:/auth-alembic/versions:ro
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+    expose:
+      - "8000"
+    networks:
+      - shared
+
+networks:
+  shared:
+    external: true
+    name: authentication_default

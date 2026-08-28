@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: projectpulse-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-projectpulse}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-projectpulse}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: projectpulse-auth-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+    ports:
+      - "8001:8000"
+    command: >
+      sh -c "uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
